@@ -47,6 +47,7 @@ class Settings:
     smtp_password: str = field(default='', repr=False)
     smtp_host: str = 'smtp.gmail.com'
     smtp_port: int = 465
+    availability_mode: str = 'purchase'
 
     @classmethod
     def from_env(cls, env=None):
@@ -62,6 +63,9 @@ class Settings:
             raise ValueError('CHECK_INTERVAL must be positive')
         dry = _bool(env.get('DRY_RUN', 'true'))
         verified = _bool(env.get('PURCHASE_SELECTOR_VERIFIED', 'false'))
+        availability_mode = env.get('AVAILABILITY_MODE', 'purchase').lower()
+        if availability_mode not in ('purchase', 'calendar'):
+            raise ValueError('AVAILABILITY_MODE must be purchase or calendar')
         channel = env.get('NOTIFICATION_CHANNEL', 'sms').lower()
         if channel not in ('sms', 'email'):
             raise ValueError('NOTIFICATION_CHANNEL must be sms or email')
@@ -94,8 +98,8 @@ class Settings:
                 raise ValueError('Two EMAIL_RECIPIENTS and SMTP_USER/SMTP_PASSWORD required')
             if channel == 'sms' and (len(numbers) != 2 or not sms_user or not sms_pass or not 3 <= len(header) <= 11):
                 raise ValueError('Two SMS_RECIPIENTS and Netgsm credentials/header required')
-            if not verified:
+            if availability_mode == 'purchase' and not verified:
                 raise ValueError('PURCHASE_SELECTOR_VERIFIED must be true before live notifications')
         return cls(user, password, dry, interval, Path(env.get('DATA_DIR', 'data')),
                    numbers, sms_user, sms_pass, header, purchase, verified,
-                   channel, smtp_user, smtp_password, smtp_host, smtp_port)
+                   channel, smtp_user, smtp_password, smtp_host, smtp_port, availability_mode)

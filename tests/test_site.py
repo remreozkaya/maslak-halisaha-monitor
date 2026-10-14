@@ -79,3 +79,19 @@ def test_loading_class_is_not_proof_of_fresh_rows(page):
  page.route('https://fixture.test/**',lambda route:route.fulfill(body='ok' if route.request.url.endswith('/sessions') else html,content_type='text/html; charset=utf-8'))
  page.goto('https://fixture.test/')
  assert SiteProbe(None,page=page).inspect_day(DAY)==[]
+
+def test_calendar_enabled_day_alerts_even_when_all_sessions_full(page):
+ from dataclasses import replace
+ from maslak_monitor.config import Settings
+ html=HTML.replace('<button>Satın Al</button>','<button disabled>[Mesaj_Dolu]</button>')
+ page.set_content(html)
+ settings=replace(Settings('user','secret'),availability_mode='calendar')
+ assert SiteProbe(settings,page=page).inspect_day(DAY)==[Slot(DAY,'Takvimde seçilebilir gün')]
+ assert page.locator('#txtTarih').input_value()=='2026-10-13'  # No session request/click needed.
+
+def test_calendar_disabled_day_never_alerts(page):
+ from dataclasses import replace
+ from maslak_monitor.config import Settings
+ page.set_content(HTML)
+ settings=replace(Settings('user','secret'),availability_mode='calendar')
+ assert SiteProbe(settings,page=page).inspect_day(date(2026,10,20))==[]

@@ -48,3 +48,5 @@ Bağımsız incelemede üç önemli hata bulundu: çerez penceresinin girişe en
 5. Bağımsız inceleme canlı düğme yapısı/giriş, sağlayıcı teslimi, sunucu dağıtımı ve Docker çalıştırmasını değerlendirmedi. Bunlar doğrulanmamış kurulum şartları olarak korunur; canlı ortam uyarlaması gerekebilir.
 
 Sırlar kaynak koda eklenmedi. Varsayılan `DRY_RUN=true`; satın alma düğmesi doğrulanmadan canlı gönderim etkinleşmez. Sürekli sağlık bildirim kanalının kurulması dağıtım aşamasında tamamlanmalıdır.
+
+GitHub sürümü: takvim modu, şifreli kalıcı geçmiş, 98 test. Canlı GitHub kontrolü 19–25 Ekim 2026 takvim günlerini henüz kapalı gördü. Gmail yerel testte iki iletiyi kabul etti; kullanıcı teslim almayı doğruladı. Maslak pozitif takvim açılışı henüz gözlenmedi.

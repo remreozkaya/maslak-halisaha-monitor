@@ -37,7 +37,10 @@ def run_once(now,settings,probe,store,sender,dry_run) -> CheckResult:
         if dry_run:
             return CheckResult('opened_dry_run',len(slots))
         store.record_opening(week,slots)
-    message=f'Maslak Hali Saha: {week} haftasinda rezervasyona acik seans bulundu. {URL}'
+    if settings.availability_mode == 'calendar':
+        message=f'Maslak Hali Saha: {week} haftasinin gunleri takvimde secilebilir oldu. Ilk gorulen tarih: {slots[0].day}. {URL}'
+    else:
+        message=f'Maslak Hali Saha: {week} haftasinda rezervasyona acik seans bulundu. {URL}'
     for recipient in settings.recipients:
         if not store.claim_recipient(week,recipient):
             continue

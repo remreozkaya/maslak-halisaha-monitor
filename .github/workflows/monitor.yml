@@ -35,6 +35,7 @@ jobs:
       ITU_USERNAME: ${{ secrets.ITU_USERNAME }}
       ITU_PASSWORD: ${{ secrets.ITU_PASSWORD }}
       NOTIFICATION_CHANNEL: email
+      AVAILABILITY_MODE: calendar
       EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
       SMTP_USER: ${{ secrets.SMTP_USER }}
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}

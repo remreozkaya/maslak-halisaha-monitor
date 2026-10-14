@@ -103,3 +103,47 @@ def test_wrong_key_fails_closed(setup):
 def test_bootstrap_cannot_overwrite_existing_state(setup):
     bootstrap(setup)
     with pytest.raises(StateError): state(setup).initialize()
+
+def test_committed_claim_with_lost_response_never_resends(setup):
+    bootstrap(setup)
+    remote,key,client=setup
+    normal=remote.handle
+    def lost_response(request):
+        response=normal(request)
+        if request.method=='PUT':
+            raise httpx.ReadTimeout('response lost',request=request)
+        return response
+    client=httpx.Client(transport=httpx.MockTransport(lost_response))
+    durable=GithubState('owner/repo','token',key,client=client)
+    with RemoteStore(durable) as db:
+        with pytest.raises(StateError): db.claim_recipient(WEEK,'recipient@example.com')
+    with RemoteStore(state(setup)) as db:
+        db.recover_interrupted()
+        assert db.recipient_state(WEEK,'recipient@example.com')=='unknown'
+        assert not db.claim_recipient(WEEK,'recipient@example.com')
+
+def test_stale_sha_prevents_second_worker_claim(setup):
+    bootstrap(setup)
+    remote,key,client=setup
+    first=RemoteStore(state(setup))
+    second=RemoteStore(state(setup))
+    with first,second:
+        assert first.claim_recipient(WEEK,'recipient@example.com')
+        def conflict(request):
+            import json
+            if request.method=='PUT' and json.loads(request.content).get('sha')!=remote.sha:
+                return httpx.Response(409)
+            return remote.handle(request)
+        second.remote.client=httpx.Client(transport=httpx.MockTransport(conflict))
+        with pytest.raises(StateError): second.claim_recipient(WEEK,'recipient@example.com')
+
+def test_failed_finish_after_acceptance_prevents_repeat(setup):
+    bootstrap(setup)
+    with RemoteStore(state(setup)) as db:
+        db.claim_recipient(WEEK,'recipient@example.com')
+        setup[0].fail=True
+        with pytest.raises(StateError): db.finish_recipient(WEEK,'recipient@example.com','accepted',None)
+    setup[0].fail=False
+    with RemoteStore(state(setup)) as db:
+        db.recover_interrupted()
+        assert not db.claim_recipient(WEEK,'recipient@example.com')

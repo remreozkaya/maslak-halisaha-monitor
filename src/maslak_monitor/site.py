@@ -118,8 +118,15 @@ class SiteProbe:
             nxt.click()
         if target is None:
             raise ProbeError('Target date absent from calendar')
-        if 'flatpickr-disabled' in (target.get_attribute('class') or ''):
+        classes=(target.get_attribute('class') or '').split()
+        if 'flatpickr-day' not in classes:
+            raise ProbeError('Calendar date structure changed')
+        if 'flatpickr-disabled' in classes:
             return []
+        if not target.is_visible():
+            raise ProbeError('Calendar date is not visible')
+        if self.settings and self.settings.availability_mode == 'calendar':
+            return [Slot(day,'Takvimde seçilebilir gün')]
         if page.locator('#txtTarih').input_value() == day.isoformat():
             # Valid only immediately after a completed fresh page load/site selection.
             return self._read_rows(day)

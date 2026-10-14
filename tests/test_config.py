@@ -24,3 +24,13 @@ def test_live_mode_requires_verification():
  s = Settings.from_env(data | {'PURCHASE_SELECTOR_VERIFIED':'true'})
  assert s.recipients == ('5551111111','5552222222')
  assert 'secret' not in repr(s)
+
+def test_calendar_trigger_does_not_require_purchase_verification():
+ data=BASE | {'DRY_RUN':'false','NOTIFICATION_CHANNEL':'email','EMAIL_RECIPIENTS':'one@example.com,two@example.com',
+ 'SMTP_USER':'sender@example.com','SMTP_PASSWORD':'test','AVAILABILITY_MODE':'calendar'}
+ s=Settings.from_env(data)
+ assert s.availability_mode=='calendar' and not s.selector_verified
+
+def test_unknown_trigger_refused():
+ with pytest.raises(ValueError,match='AVAILABILITY_MODE'):
+  Settings.from_env(BASE | {'AVAILABILITY_MODE':'anything'})

@@ -1,5 +1,7 @@
 # GitHub Actions kurulumu
 
+Bildirim koşulu: Maslak takviminde hedef haftanın en az bir günü seçilebilir hale geldiğinde e-posta gönderilir. Boş seans veya etkin satın alma düğmesi aranmaz. Bu, kullanıcının son talebidir.
+
 Standart Linux runner kullanan açık depolarda bu çalışma ücretsizdir. Bilgisayarınızın açık olması gerekmez. Ücretli runner veya ücretli sunucu kullanılmaz.
 
 ## Çalışma zamanı
@@ -12,7 +14,7 @@ Açık depolarda 60 gün depo etkinliği olmazsa zamanlama otomatik kapatılabil
 
 Repository Secrets: `ITU_USERNAME`, `ITU_PASSWORD`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_RECIPIENTS` (virgülle ayrılmış iki adres), `STATE_ENCRYPTION_KEY` (Fernet anahtarı).
 
-Repository Variables: `PURCHASE_BUTTON_TEXT` ve `PURCHASE_SELECTOR_VERIFIED`. Gerçek satın alınabilir seansın etkin düğmesi görülüp metni doğrulanmadan `PURCHASE_SELECTOR_VERIFIED=true` yapılmaz. Varsayılan `false` güvenlik kontrolü, canlı bildirimi durdurur.
+Workflow `AVAILABILITY_MODE=calendar` kullanır. Takvim gününün `flatpickr-day` olması, görünür olması ve `flatpickr-disabled` olmaması aranır. Geçerli giriş ve Maslak seçimi her kontrolde yapılır. `PURCHASE_SELECTOR_VERIFIED` ayarı yalnızca ayrı `purchase` modunda gereklidir; satın alma modu etkinleştirilmedi.
 
 `monitor-state` dalındaki `state.enc`, anahtarla şifrelenmiş SQLite geçmişidir. Alıcılar ve seans kayıtları düz metin yayımlanmaz. Bu dalı veya anahtarı silmeyin; geçmiş kaybolursa uygulama otomatik sıfırlamaz ve hata verir. Yeniden sıfırlamak tekrar bildirimlere neden olabilir.
 
@@ -24,7 +26,7 @@ Gönderim talebi önce GitHub'a kaydedilir. SMTP kabulü sonrası sonuç kaydedi
 2. Secrets eklenir; `monitor-state` dalı ve ilk şifreli boş kayıt yalnızca kurulumda oluşturulur.
 3. `test-email` modu iki açıkça TEST etiketli e-posta gönderir.
 4. `probe-week` modu (haftanın pazartesi tarihini seçerek) zaman aralığı dışında da yalnızca sayfayı inceler; bildirim göndermez.
-5. Etkin satın alma düğmesi doğrulanınca değişkenler kaydedilir. İş cuma penceresinde canlı çalışır.
+5. Takvim modu cuma penceresinde canlı çalışır; aynı hafta için alıcı başına bir bildirim gönderilir.
 
 Actions `workflow_dispatch` modları: `dry-run` (zaman penceresinde kontrol, e-posta yok), `monitor` (canlı kontrol), `test-email`, `probe-week`. Başarısız iş bildirimi için GitHub hesabınızın Actions e-posta bildirim ayarları kullanılabilir.
 
