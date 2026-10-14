@@ -95,3 +95,14 @@ def test_calendar_disabled_day_never_alerts(page):
  page.set_content(HTML)
  settings=replace(Settings('user','secret'),availability_mode='calendar')
  assert SiteProbe(settings,page=page).inspect_day(date(2026,10,20))==[]
+
+def test_calendar_week_selects_maslak_and_does_not_inspect_full_sessions(page):
+ from dataclasses import replace
+ from maslak_monitor.config import Settings
+ html='<select id="cmbUst"><option>Seçiniz</option><option>Halı Saha</option></select><select id="cmbAlt"><option>Seçiniz</option><option>Maslak Halı Saha</option></select>'+HTML.replace('<button>Satın Al</button>','<button disabled>[Mesaj_Dolu]</button>')
+ page.route('https://kampuskart.itu.edu.tr/**',lambda route:route.fulfill(body=html,content_type='text/html; charset=utf-8'))
+ settings=replace(Settings('user','secret'),availability_mode='calendar')
+ assert SiteProbe(settings,page=page).check_week(DAY)==[Slot(DAY,'Takvimde seçilebilir gün')]
+ assert page.locator('#cmbUst').input_value()=='Halı Saha'
+ assert page.locator('#cmbAlt').input_value()=='Maslak Halı Saha'
+ assert page.locator('#txtTarih').input_value()=='2026-10-13'

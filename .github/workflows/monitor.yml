@@ -52,6 +52,19 @@ jobs:
           persist-credentials: false
       - name: Install monitor
         run: python -m pip install --disable-pip-version-check .
+      - name: Verify encrypted notification history
+        run: |
+          python - <<'PYCODE'
+          import os
+          from maslak_monitor.github_state import GithubState, RemoteStore
+          remote=GithubState(os.environ['GITHUB_REPOSITORY'],os.environ['GITHUB_TOKEN'],os.environ['STATE_ENCRYPTION_KEY'].encode())
+          try:
+              with RemoteStore(remote) as store:
+                  store.db.execute('SELECT COUNT(*) FROM recipients').fetchone()
+              print('encrypted_history=verified')
+          finally:
+              remote.close()
+          PYCODE
       - name: Check reservation availability
         if: ${{ inputs.mode != 'test-email' && inputs.mode != 'probe-week' }}
         run: python -m maslak_monitor.github_runner
