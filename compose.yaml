@@ -1,0 +1,25 @@
+services:
+  monitor:
+    build: .
+    init: true
+    restart: unless-stopped
+    shm_size: 256mb
+    env_file:
+      - ${MONITOR_ENV_FILE:-.env}
+    environment:
+      DATA_DIR: /app/data
+    volumes:
+      - monitor-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-m", "maslak_monitor", "--check-health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+volumes:
+  monitor-data:
