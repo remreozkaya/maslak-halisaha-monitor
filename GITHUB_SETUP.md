@@ -12,7 +12,7 @@ Açık depolarda 60 gün depo etkinliği olmazsa zamanlama otomatik kapatılabil
 
 ## Güvenli yapılandırma
 
-Repository Secrets: `ITU_USERNAME`, `ITU_PASSWORD`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_RECIPIENTS` (virgülle ayrılmış iki adres), `STATE_ENCRYPTION_KEY` (Fernet anahtarı).
+Repository Secrets: `ITU_USERNAME`, `ITU_PASSWORD`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_RECIPIENTS` (virgülle ayrılmış iki veya üç adres), `STATE_ENCRYPTION_KEY` (Fernet anahtarı).
 
 Workflow `AVAILABILITY_MODE=calendar` kullanır. Takvim gününün `flatpickr-day` olması, görünür olması ve `flatpickr-disabled` olmaması aranır. Geçerli giriş ve Maslak seçimi her kontrolde yapılır. `PURCHASE_SELECTOR_VERIFIED` ayarı yalnızca ayrı `purchase` modunda gereklidir; satın alma modu etkinleştirilmedi.
 
@@ -24,7 +24,7 @@ Gönderim talebi önce GitHub'a kaydedilir. SMTP kabulü sonrası sonuç kaydedi
 
 1. Kişisel `.env` dosyası yüklenmeden kod yayımlanır.
 2. Secrets eklenir; `monitor-state` dalı ve ilk şifreli boş kayıt yalnızca kurulumda oluşturulur.
-3. `test-email` modu iki açıkça TEST etiketli e-posta gönderir.
+3. `test-email` modu her alıcıya açıkça TEST etiketli e-posta gönderir.
 4. `probe-week` modu (haftanın pazartesi tarihini seçerek) zaman aralığı dışında da yalnızca sayfayı inceler; bildirim göndermez.
 5. Takvim modu cuma penceresinde canlı çalışır; aynı hafta için alıcı başına bir bildirim gönderilir.
 

@@ -91,3 +91,15 @@ def test_scheduler_caps_at_final_boundary_and_accounts_for_query_time():
  assert next_tick(NOW+timedelta(seconds=35),NOW,120,NOW+timedelta(days=3))==NOW+timedelta(seconds=120)
  end=NOW+timedelta(days=3)
  assert next_tick(end-timedelta(seconds=10),end-timedelta(seconds=20),120,end)==end
+
+def test_three_recipients_get_one_notification_each_per_week(settings):
+ settings=replace(settings,channel='email',availability_mode='calendar',recipients=('one@example.com','two@example.com','three@example.com'))
+ sent=[]
+ class MailSender:
+  def send(self,recipient,message):
+   sent.append(recipient)
+   return SendResult('accepted')
+ with Store(settings.data_dir/'state.db') as db:
+  assert run_once(NOW,settings,Probe([Slot(WEEK,'selectable')]),db,MailSender(),False).status=='notified'
+  assert run_once(NOW+timedelta(minutes=5),settings,NoCall(),db,NoCall(),False).status=='notified'
+ assert sent==list(settings.recipients)

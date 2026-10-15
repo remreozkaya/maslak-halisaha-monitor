@@ -80,9 +80,11 @@ def test_email_channel_uses_smtp_sender_instead_of_sms(monkeypatch):
  assert transport.send('first@example.com','test mail').status=='accepted'
 
 
-def test_test_email_command_sends_two_messages_without_querying_site(monkeypatch,tmp_path):
+@pytest.mark.parametrize("recipient_count",[2,3])
+def test_test_email_command_sends_messages_without_querying_site(monkeypatch,tmp_path,recipient_count):
  from maslak_monitor import main as service
- for key,value in (BASE|{'SMTP_USER':'sender@gmail.com','SMTP_PASSWORD':'app-secret','DATA_DIR':str(tmp_path)}).items():
+ addresses=['first@example.com','second@example.com','third@example.com'][:recipient_count]
+ for key,value in (BASE|{'EMAIL_RECIPIENTS':','.join(addresses),'SMTP_USER':'sender@gmail.com','SMTP_PASSWORD':'app-secret','DATA_DIR':str(tmp_path)}).items():
   monkeypatch.setenv(key,value)
  messages=[]
  class MailConnection(Connection):
@@ -92,9 +94,14 @@ def test_test_email_command_sends_two_messages_without_querying_site(monkeypatch
  monkeypatch.setattr(smtplib,'SMTP_SSL',lambda *a,**kw:MailConnection())
  monkeypatch.setattr(service,'SiteProbe',lambda *a,**kw: (_ for _ in ()).throw(AssertionError('Site must not be queried')))
  assert service.main(['--test-email'])==0
- assert {r for r,_ in messages}=={'first@example.com','second@example.com'}
+ assert {r for r,_ in messages}==set(addresses)
  assert all('TEST' in body for _,body in messages)
 
 def test_explicit_sender_rejection_is_retryable_not_unknown():
  error=smtplib.SMTPSenderRefused(451,b'Temporary sender rejection','sender@gmail.com')
  assert sender(Connection(send_error=error)).send('first@example.com','hello').status=='rejected'
+
+def test_three_live_email_recipients_supported():
+ data=BASE|{'EMAIL_RECIPIENTS':'first@example.com,second@example.com,third@example.com',
+ 'DRY_RUN':'false','AVAILABILITY_MODE':'calendar','SMTP_USER':'sender@gmail.com','SMTP_PASSWORD':'app-secret'}
+ assert len(Settings.from_env(data).recipients)==3

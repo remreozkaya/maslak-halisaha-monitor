@@ -196,8 +196,8 @@ def main(argv=None):
             try:
                 if args.test_sms or args.test_email:
                     states=[sender.send(r,'TEST: Maslak Hali Saha bildirim sistemi baglanti testi.').status for r in settings.recipients]
-                    LOG.warning('test_notification_channel=%s accepted=%s/2',settings.channel,states.count('accepted'))
-                    return 0 if states==['accepted','accepted'] else 1
+                    LOG.warning('test_notification_channel=%s accepted=%s/%s',settings.channel,states.count('accepted'),len(states))
+                    return 0 if states and all(state=='accepted' for state in states) else 1
                 with SiteProbe(settings) as probe:
                     if args.probe_week:
                         if args.probe_week.weekday()!=0:

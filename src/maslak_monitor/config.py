@@ -85,8 +85,9 @@ class Settings:
         raw = env.get('EMAIL_RECIPIENTS' if channel == 'email' else 'SMS_RECIPIENTS', '')
         normalize = normalize_email if channel == 'email' else normalize_phone
         numbers = tuple(normalize(n.strip()) for n in raw.split(',')) if raw else ()
-        if numbers and (len(numbers) != 2 or len(set(numbers)) != 2):
-            raise ValueError('Exactly two distinct notification recipients required')
+        allowed_counts = (2, 3) if channel == 'email' else (2,)
+        if numbers and (len(numbers) not in allowed_counts or len(set(numbers)) != len(numbers)):
+            raise ValueError('Two or three distinct email recipients required' if channel == 'email' else 'Exactly two distinct notification recipients required')
         sms_user = env.get('NETGSM_USERCODE', '')
         sms_pass = env.get('NETGSM_PASSWORD', '')
         header = env.get('NETGSM_HEADER', '')
@@ -94,8 +95,8 @@ class Settings:
         if not purchase:
             raise ValueError('PURCHASE_BUTTON_TEXT required')
         if not dry:
-            if channel == 'email' and (len(numbers) != 2 or not smtp_user or not smtp_password):
-                raise ValueError('Two EMAIL_RECIPIENTS and SMTP_USER/SMTP_PASSWORD required')
+            if channel == 'email' and (len(numbers) not in allowed_counts or not smtp_user or not smtp_password):
+                raise ValueError('Two or three EMAIL_RECIPIENTS and SMTP_USER/SMTP_PASSWORD required')
             if channel == 'sms' and (len(numbers) != 2 or not sms_user or not sms_pass or not 3 <= len(header) <= 11):
                 raise ValueError('Two SMS_RECIPIENTS and Netgsm credentials/header required')
             if availability_mode == 'purchase' and not verified:
