@@ -6,7 +6,11 @@ Standart Linux runner kullanan açık depolarda bu çalışma ücretsizdir. Bilg
 
 ## Çalışma zamanı
 
-Europe/Istanbul saatine göre cuma 10.00–pazartesi 10.00 arasında beş dakikada bir planlanır. GitHub işleri geciktirebilir veya atlayabilir; beş dakikada çalışma ve anlık bildirim garantisi yoktur. Pazartesi 10.00 işi geç başlarsa zaman aralığı dışında kaldığından kontrol yapmaz.
+Europe/Istanbul saatine göre cuma 10.00–pazartesi 10.00 arasında aktif runner içinde 300 saniyede bir kontrol yapılır. Her oturum en fazla 61 zamanlayıcı turu (yaklaşık beş saat) çalışır; bitmeden `workflow_dispatch` ile sıradaki oturumu başlatır. Aynı anda yalnızca bir canlı oturum çalışır. Site kontrolü en fazla 240 saniye sürer; zaman aşımı sonraki turu durdurmaz. Kontrol süresi beş dakikalık aralığa eklenmez.
+
+Zamanlayıcı hafta içi de oturum devrini sürdürür, ancak izin verilen cuma–pazartesi aralığı dışında İTÜ sitesine girmez ve e-posta göndermez. Böylece sonraki cuma başlangıcı için yeni bir cron tetiklemesi gerekmez. Mevcut beş dakikalık cron yalnızca ilk başlatma/yedek kurtarma içindir; her kontrol için cron beklenmez.
+
+GitHub kesintisi, runner kapanması veya oturum devrinin gecikmesi yine boşluk oluşturabilir; katı gerçek zaman garantisi yoktur. Ancak cron tetiklemelerinin saatlerce gelmemesi aktif oturumdaki beş dakikalık kontrolleri durdurmaz. `check_started_at`, `check_finished_at` ve `successor_queued` kayıtları gerçek kontrol/devretme zamanlarını gösterir. Workflow için `contents: write` şifreli geçmişi, `actions: write` ise sonraki oturumu başlatmayı sağlar.
 
 Açık depolarda 60 gün depo etkinliği olmazsa zamanlama otomatik kapatılabilir. Actions sayfasından yeniden etkinleştirilmelidir. Başarılı seans bildirimleri şifreli durum dalına kayıt yazar, fakat uzun süre açılış olmaması veya sürekli hata alınması halinde bununla yetinilemez.
 
@@ -29,5 +33,7 @@ Gönderim talebi önce GitHub'a kaydedilir. SMTP kabulü sonrası sonuç kaydedi
 5. Takvim modu cuma penceresinde canlı çalışır; aynı hafta için alıcı başına bir bildirim gönderilir.
 
 Actions `workflow_dispatch` modları: `dry-run` (zaman penceresinde kontrol, e-posta yok), `monitor` (canlı kontrol), `test-email`, `probe-week`. Başarısız iş bildirimi için GitHub hesabınızın Actions e-posta bildirim ayarları kullanılabilir.
+
+`monitor` artık sürekli oturum zincirini başlatır. `checks` girdisi 1–61 arasında oturum uzunluğunu sınırlar; normal değer 61'dir. Devredilen oturumlar normal 61 tur kullanır. Salt okunur tanılama işleri canlı oturumun kilidini beklemez. Otomasyonu durdurmak için workflow'u devre dışı bırakın ve çalışan canlı işi iptal edin; yalnızca işi iptal etmek cron'un yeniden başlatmasını engellemez.
 
 Resmî belgeler: [GitHub fiyatlandırma](https://docs.github.com/en/billing/concepts/product-billing/github-actions), [zamanlama sınırları](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).

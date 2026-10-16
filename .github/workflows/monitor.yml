@@ -21,15 +21,20 @@ on:
         description: Diagnostic Monday (YYYY-MM-DD), only for probe-week
         type: string
         default: '2026-10-19'
+      checks:
+        description: Checks per monitor session (1-61; normally 61)
+        type: string
+        default: '61'
 permissions:
   contents: write
+  actions: write
 concurrency:
-  group: maslak-monitor
+  group: ${{ (github.event_name == 'schedule' || inputs.mode == 'monitor') && 'maslak-monitor' || format('maslak-diagnostic-{0}', github.run_id) }}
   cancel-in-progress: false
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 330
     container: mcr.microsoft.com/playwright/python:v1.63.0-noble
     env:
       ITU_USERNAME: ${{ secrets.ITU_USERNAME }}
@@ -53,6 +58,7 @@ jobs:
       - name: Install monitor
         run: python -m pip install --disable-pip-version-check .
       - name: Verify encrypted notification history
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode != 'monitor' }}
         run: |
           python - <<'PYCODE'
           import os
@@ -66,8 +72,13 @@ jobs:
               remote.close()
           PYCODE
       - name: Check reservation availability
-        if: ${{ inputs.mode != 'test-email' && inputs.mode != 'probe-week' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
         run: python -m maslak_monitor.github_runner
+      - name: Poll every five minutes and hand off to next session
+        if: ${{ github.event_name == 'schedule' || inputs.mode == 'monitor' }}
+        env:
+          SESSION_CHECKS: ${{ inputs.checks || '61' }}
+        run: python -u -m maslak_monitor.github_loop --checks "$SESSION_CHECKS"
       - name: Send labelled connection test
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'test-email' }}
         run: python -m maslak_monitor --test-email
